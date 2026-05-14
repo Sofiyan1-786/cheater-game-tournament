@@ -41,7 +41,10 @@ def get_ranking():
     conn.commit()
     conn.close()
 
-    size = max(indexes.values())+1
+    if not indexes:
+        return []
+
+    size = max(indexes.values()) + 1
 
     matrix = np.zeros((size, size), dtype=np.int32)
 
@@ -73,7 +76,15 @@ def upload():
     if not agent.endswith(".py"):
         raise Exception("Only .py files are allowed")
 
+    safe_name = os.path.basename(agent)
+    if agent != safe_name:
+        raise Exception("Invalid file name")
     
+    agent = safe_name
+    safe_name = os.path.basename(agent)
+    if agent != safe_name:
+        raise Exception("Invalid file name")
+
     if agent == "randomPlayer.py":
         raise Exception("Illegal file name")
 
@@ -135,7 +146,7 @@ def upload():
             VALUES (%(name)s, %(code)s) \
             ON CONFLICT(name) \
             DO UPDATE SET code = excluded.code;",
-            {"name": agent, "code": code}
+            {"name": agent, "code": agent_code}
         )
 
     conn.commit()
@@ -163,6 +174,6 @@ def upload():
 @app.errorhandler(Exception)
 def handle_exception(e):
     return f"""
-    <h1>Server Error</h1>
-    <pre>{traceback.format_exc()}</pre>
-    """, 500
+    <h1>Error</h1>
+    <p>{e}</p>
+    """, 400
