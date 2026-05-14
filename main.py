@@ -4,6 +4,13 @@ import subprocess
 import os
 import numpy as np
 import traceback
+import logging
+
+logging.basicConfig(
+    filename="upload.log",
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
 
 app = Flask(__name__)
 
@@ -79,11 +86,8 @@ def upload():
     safe_name = os.path.basename(agent)
     if agent != safe_name:
         raise Exception("Invalid file name")
-    
+
     agent = safe_name
-    safe_name = os.path.basename(agent)
-    if agent != safe_name:
-        raise Exception("Invalid file name")
 
     if agent == "randomPlayer.py":
         raise Exception("Illegal file name")
@@ -132,6 +136,7 @@ def upload():
         )
 
         if result.returncode != 0:
+            logging.error(f"Evaluation failed: {agent} vs {other_agent} — stderr: {result.stderr}")
             raise Exception(f"Error occurred while evaluating {agent} vs {other_agent}: {result.stdout + result.stderr}")
 
         result = int(result.stdout)
@@ -173,6 +178,7 @@ def upload():
 
 @app.errorhandler(Exception)
 def handle_exception(e):
+    logging.error(f"Unhandled exception: {traceback.format_exc()}")
     return f"""
     <h1>Error</h1>
     <p>{e}</p>
